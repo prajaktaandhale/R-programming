@@ -1,0 +1,151 @@
+---
+title: "BZAN 6351-Final Project"
+author: "Prajakta Andhale"
+date: "11/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Preparation
+
+```{r}
+#Downloading Packages
+library(magrittr)
+library(dplyr)  
+library(tidyverse)
+library(ggplot2)
+
+```
+
+```{r}
+#importing athlete_events.csv file and assign it to atheletes.
+atheletes <-read.csv("athlete_events.csv", header =T)
+
+#Check the imported data using head() function.
+head(atheletes)
+
+#View the summary statistics for the variables.
+summary(atheletes)
+View(atheletes)
+```
+
+```{r}
+#The year variable is a categorical variable. So, convert the year variable to factor values.Remove all the NA values in the Medal column. (Hint: != “”). Do not remove the NA values from other columns in this dataset. Highly unrecommended.
+
+cData<- atheletes %>% mutate(Year= as.factor(Year)) %>% filter(!is.na(Medal))
+View(cData)
+str(cData)
+```
+
+```{r}
+#1 Make a subset for Team USA in the dataset and assign it to USA
+USA <- subset(cData, Team == 'United States')
+```
+
+```{r}
+#2 summary of the total medals of each sport in the United States and arrange in the descending order based on the number of medals
+sport <- USA %>% group_by(Sport) %>% summarise(c = length(Medal)) %>% arrange(desc(c))
+sport
+```
+#Analysis 2: We can observe that according to output sport Athletics has highest number of medals i.e is 1071 and Ski Jumping sport has lowest number medals earned i.e 1
+```{r}
+#3 Find Total medals won in each city in the United States and arrange in the descending order based on the number of medals
+total_medals <- USA %>% group_by(City, Year)  %>% summarise(c = length(Medal)) %>% arrange(desc(c))
+total_medals
+```
+#Analysis 3: According to analysis of output we can see that Los Angeles city has highest number of medals earned i.e 352 and lowest number of medals earned is by Sankt Moritz city i.e 4
+```{r}
+#4 Medals earned per year by United States in Swimming represented in a line Chart
+usa_swim <- subset(USA, Sport == "Swimming")
+by_year <- usa_swim %>% group_by(Year) %>% count(Medal)  %>% summarise(sum(n))
+ggplot(by_year, aes(x=`sum(n)`, y= Year,group=1 ) )+ geom_line()
+
+```
+#Analysis 4: According to analysis we can observe that lowest number of medals earned in swimming is in the year 1904 and highest number of medals earned are in year 2016
+```{r}
+#5 Calculate medal tally per country and sort them in the descending order.
+tally(group_by(cData, Team), sort = TRUE) 
+
+```
+#Analysis 5: According to output we can see that united states have earned highest number of medals i.e 5219 and lowest number of medals earned by country is United States Virgin Islands
+```{r}
+#6 Top 10 medal winning countries
+top_10 <- tally(group_by(cData, Team), sort = TRUE) %>% top_n(10)
+top_10
+```
+
+```{r}
+#7 Column chart representation of top 10 countries with highest number of medals
+top_10 %>% ggplot() +geom_col(mapping = aes(x=Team, y=n))
+
+```
+
+```{r}
+#8 Calculate the medal tally of countries per year 
+medal_tally <- tally(group_by(cData,Team, Year)) %>% summarise(sum(n)) %>% arrange(desc(`sum(n)`))
+medal_tally
+```
+
+```{r}
+#9 Summary of Medals grouped by Team 
+cData %>% group_by(Team, Medal) %>% summarise(c=length(Medal)) %>% arrange(desc(c))
+
+```
+#Analysis 9: According to output we can observe that United States has earned highest number of Gold, Silver, Bronze 
+```{r}
+#10 Sum of Medals for United states, France, Germany, and Great Britain represented as a column chart 
+countries <- subset(cData, cData$Team == "United States" | 
+                  cData$Team == "France" |cData$Team == "Germany"| cData$Team == "Great Britain")
+
+c <-countries %>% group_by(Team) %>% count(Medal) %>% ggplot() +geom_col(mapping = aes(x=Team, y=n))
+c
+```
+
+```{r}
+#11 Sum of gold medals earned by each country and display in descending order
+gold <- subset(cData, cData$Medal == "Gold")
+tally(group_by(gold, Team), sort = TRUE)      
+```
+#Analysis 11: We can observe that United States has earned highest number of Gold medals i.e 2474 and lowest gold medals was earned by Vietnam i.e 1
+```{r}
+#12 Sum of silver medals earned by each country and display in descending order
+silver <- subset(cData, cData$Medal == "Silver")
+tally(group_by(silver, Team), sort = TRUE)  
+```
+#Analysis 12: According to output we can observe United States has earned highest number of Silver medals i.e 1512 and lowest silver medals are earned by Zambia i.e 1
+```{r}
+#13 Sum of bronze medals earned by each country and display in descending order
+bronze <- subset(cData, cData$Medal == "Bronze")
+tally(group_by(bronze, Team), sort = TRUE)    
+```
+#Analysis 13: According to output we can observe United States has earned highest number of bronze medals i.e 1233 and lowest silver medals are earned by Zambabwe i.e 1
+```{r}
+#14 Total medals earned by United States, France, Germany, Great Britain 
+countries <- subset(cData, cData$Team == "United States" | 
+                      cData$Team == "France" |cData$Team == "Germany"| cData$Team == "Great Britain")
+total_medals<- countries %>% group_by(Team) %>% count(Medal)  %>% summarise(sum(n))
+total_medals
+```
+
+```{r}
+#15 Total medals earned by United States, France, Germany, Russia, China in Summer and Winter
+countries2 <- subset(cData, cData$Team == "United States" | cData$Team == "China" |
+                       cData$Team == "France" |cData$Team == "Germany"| cData$Team == "Russia")
+View(countries2)
+medals_in_summer <- countries2 %>% filter(grepl('Summer', Games)) %>% group_by(Team) %>% count(Medal)  %>% summarise(sum(n))
+medals_in_summer%>% ggplot() +geom_col(mapping = aes(x=Team, y=`sum(n)`))
+
+medals_in_winter <- countries2 %>% filter(grepl('Winter', Games)) %>% group_by(Team) %>% count(Medal)  %>% summarise(sum(n))
+medals_in_winter%>% ggplot() +geom_col(mapping = aes(x=Team, y=`sum(n)`))
+
+```
+#Analysis 15: According to output we can see that United States has earned highest number of medals in both summer and winter and china has earned lowest number of medals in both summer and winter
+```{r}
+#16 total medals earned by Women in the year 2016
+Medals_women_2016<- cData %>%filter(Year == 2016 & Sex == 'F') %>% count(Medal)
+Medals_women_2016
+```
+#Analysis 16: So we can observe that total number of medals earned by women in Year 2016 in gold is 318, silver is 320 and bronze is 331
